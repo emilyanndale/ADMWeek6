@@ -1,0 +1,123 @@
+---
+title: "Case Study"
+author: "Emily Dale"
+date: "April 22, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = 'C:/Users/eaust/OneDrive/Documents/R/Week6/data')
+ 
+```
+
+```{r, include = FALSE}
+bank <- read.csv("bank-full.csv")
+```
+
+# Data Exploration
+
+```{r}
+summary(bank)
+```
+
+Check for missing values
+```{r}
+pMiss <- function(x){sum(is.na(x))/length(x)*100}
+apply(bank,2,pMiss)
+
+```
+No missing values so we can continue.
+
+Recode variables for clustering
+
+```{r}
+bankCluster <- bank
+names(bankCluster)
+```
+
+```{r}
+#Recode Ages
+bankCluster$Age18_24 <- ifelse(bankCluster$age..number < 25 & bankCluster$age..number >= 18, 1, 0)
+bankCluster$Age25_34 <- ifelse(bankCluster$age..number < 35 & bankCluster$age..number >= 25, 1, 0)
+bankCluster$Age35_44 <- ifelse(bankCluster$age..number < 45 & bankCluster$age..number >= 35, 1, 0)
+bankCluster$Age45_54 <- ifelse(bankCluster$age..number < 55 & bankCluster$age..number >= 45, 1, 0)
+bankCluster$Age55_64 <- ifelse(bankCluster$age..number < 65 & bankCluster$age..number >= 55, 1, 0)
+bankCluster$age..number <- NULL
+```
+
+```{r}
+bankCluster$homeLoan <- ifelse(bankCluster$housing..category == "yes", 1, 0)
+bankCluster$housing..category <- NULL
+```
+
+```{r}
+bankCluster$defaultYes <- ifelse(bankCluster$default..category == "yes", 1, 0)
+bankCluster$default..category <- NULL
+```
+
+```{r}
+bankCluster$personalLoan <- ifelse(bankCluster$loan..category == "yes", 1, 0)
+bankCluster$loan..category <- NULL
+```
+
+
+```{r}
+bankCluster$eduPrimary <- ifelse(bankCluster$education..category == "primary", 1, 0)
+bankCluster$eduSecondary <- ifelse(bankCluster$education..category == "secondary", 1, 0)
+bankCluster$eduTertiary <- ifelse(bankCluster$education..category == "tertiary", 1, 0)
+bankCluster$education..category <- NULL
+```
+
+```{r}
+bankCluster$admin <- ifelse(bankCluster$job..category == "admin", 1, 0)
+bankCluster$blueCollar <- ifelse(bankCluster$job..category == "blue-collar", 1, 0)
+bankCluster$entrepreneur <- ifelse(bankCluster$job..category == "entrepreneur",1, 0)
+bankCluster$housemaid <- ifelse(bankCluster$job..category == "housemaid", 1, 0)
+bankCluster$management <- ifelse(bankCluster$job..category == "management", 1, 0)
+bankCluster$retired <- ifelse(bankCluster$job..category == "retired", 1, 0)
+bankCluster$selfEmployed <- ifelse(bankCluster$job..category == "self-employed", 1, 0)
+bankCluster$services <- ifelse(bankCluster$job..category == "services", 1, 0)
+bankCluster$student <- ifelse(bankCluster$job..category == "student", 1, 0)
+bankCluster$technician <- ifelse(bankCluster$job..category == "technician", 1, 0)
+bankCluster$unemployed <- ifelse(bankCluster$job..category == "unemployed", 1, 0)
+bankCluster$job..category <-NULL
+```
+
+```{r}
+bankCluster$married <- ifelse(bankCluster$marital..category == "married", 1, 0)
+bankCluster$single <- ifelse(bankCluster$marital..category == "single", 1, 0)
+bankCluster$marital..category <- NULL
+```
+
+```{r}
+bankCluster$subscriber <- ifelse(bankCluster$y..category == "yes", 1, 0)
+bankCluster$y..category <- NULL
+```
+
+```{r}
+bankCluster <- bankCluster[, -c(1:9)]
+```
+
+```{r}
+summary(bankCluster)
+```
+
+```{r}
+set.seed(1234)
+bank_cluster_2 <- kmeans(bankCluster, centers=2) 
+Clusters_2<-data.frame(bank_cluster_2$centers)
+bank_cluster_2$size
+#View(t(Clusters_2))
+```
+
+
+![      *Characteristics of Hometown Bank's Two Primary Groups*](C:/Users/eaust/OneDrive/Documents/R/Week6/data/Clusters.png) 
+
+
+
+
+
+
+
+
+
