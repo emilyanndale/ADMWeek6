@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_knit$set(root.dir = 'C:/Users/eaust/OneDrive/Documents/R/Week6/data')
+knitr::opts_knit$set(root.dir = 'C:/Users/eaust/OneDrive/Documents/R/Week6/ADMWeek6/data')
  
 ```
 
@@ -111,7 +111,7 @@ bank_cluster_2$size
 ```
 
 
-![      *Characteristics of Hometown Bank's Two Primary Groups*](C:/Users/eaust/OneDrive/Documents/R/Week6/data/Clusters.png) 
+![      *Characteristics of Hometown Bank's Two Primary Groups*](C:/Users/eaust/OneDrive/Documents/R/Week6/ADMWeek6/data/Clusters.png) 
 
 # Decision Tree
 
@@ -119,7 +119,6 @@ Split into train and test set. For this assignment I'm trying out caTools packag
 ```{r}
 set.seed(1234)
 library(caTools)
-?caTools
 bank$spl <- sample.split(bank[,1], SplitRatio = 0.7)
 ```
 
@@ -149,9 +148,7 @@ This decision tree shows that those customers more likely to subcribe are:
 * those who were last contacted within the previous 132-522 days and whose last outcome was successful.
 * those who were not contacted in the last 828 days.
 * those who were last contacted within the previous 522-828 days and whose last outcome was successful.
-```{r}
-levels(bank$poutcome..category)
-```
+
 
 
 ```{r}
@@ -162,11 +159,40 @@ results.matrix <- confusionMatrix(predicted, actual, positive="yes")
 print(results.matrix)
 ```
 
-The measure we want to focus on is specificity. To avoid wasting staff to subcribe, so finding true negatives is the most important factor. In this case, the model found true negatives at a rate of 97.2%, so we can say with 97% certainty that those customers shouldn't be contacted. More effort and resources can be spent on the other customers. 
+The measure we want to focus on is specificity. We want to avoid wasting resources (staff time, mailing fees, etc.), so finding true negatives is the most important factor. In this case, the model found true negatives at a rate of 97.2%, so we can say with 97% certainty that those customers shouldn't be contacted. More effort and resources can be spent on the other customers. 
+
+```{r}
+cptable <- printcp(bank_rpart)
+plotcp(bank_rpart, minline=TRUE, col="red") 
+```
 
 
+```{r}
+pruned_bank_rpart <- prune(bank_rpart, cp=.031)
+rpart.plot(pruned_bank_rpart, type=0, extra=101)
+```
 
 
+# Random Forest
+
+```{r}
+names(bank_train)
+library(randomForest)
+bank.rForest <- randomForest(y..category~., data=bank_train, mtry=3, ntree=500, na.action = na.omit, importance=TRUE)
+print(bank.rForest)
+```
+
+```{r}
+importance(bank.rForest)
+varImpPlot(bank.rForest)
+```
+
+```{r}
+actual <- bank_train$y..category 
+bank_predicted <- predict(bank.rForest, newdata=bank_train, type="class") 
+bank_results.matrix.rf <- confusionMatrix(bank_predicted, actual, positive="yes") 
+print(bank_results.matrix.rf)
+```
 
 
 
