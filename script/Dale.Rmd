@@ -1,10 +1,37 @@
 ---
-title: "Case Study"
+title: "Case Study: Improving Term Deposit Client Base"
 author: "Emily Dale"
 date: "April 22, 2017"
 output: html_document
 ---
+# Background
+Hometown Bank has a goal of understanding and improving its status in the term deposit market. To help them reach this goal, I will study the provided data and recommend actions to gain new customers in the term deposit market. 
 
+# Data Overview
+Hometown Bank provided a dataset with information on 45,211 clients. Each client has the following features listed:
+* Age
+* Job
+* Marital Status
+* Education
+* Credit Default (yes/no)
+* Average Yearly Balance
+* Housing Loan (yes/no)
+* Personal Loan (yes/no)
+* Contact Type
+* Last Day of Contact
+* Last Month of Contact
+* Last Duration of Contact
+* Number of Contacts During Campaign
+* Days Since Contact from Last Campaign
+* Number of Previous Contacts
+* Outcome of Previous Campaign
+* Target Outcome: Has the client subscribed to a term deposit? (yes/no)
+
+By studying the first 16 features for each client and whether or not they eventually subscribe to a term deposit, I will be able to make recommendations for a more targeted marketing campaign.
+
+
+# Data Preparation
+Before studying the data further, it first must be prepared. I will outline every transformation and why it has occurred as this case study progresses.
 ```{r setup, include=FALSE}
 knitr::opts_knit$set(root.dir = 'C:/Users/eaust/OneDrive/Documents/R/Week6/ADMWeek6/data')
  
@@ -14,29 +41,38 @@ knitr::opts_knit$set(root.dir = 'C:/Users/eaust/OneDrive/Documents/R/Week6/ADMWe
 bank <- read.csv("bank-full.csv")
 ```
 
-# Data Exploration
-
+### Examine Data
+First, I want to see characteristics for each feature in the dataset so I have a better understanding of the client base. 
 ```{r}
 summary(bank)
 ```
+Clients range from 18 to 95 years of age, but the average age is around 41. An interesting tidbit gained from this involve previous contacts during campaigns: most clients have never been contacted for a campaign, but some have been contacted up to 275 times. It will be interesting to see if this has an impact on whether or not they subscribe to a term deposit.
 
-Check for missing values
-```{r}
-pMiss <- function(x){sum(is.na(x))/length(x)*100}
-apply(bank,2,pMiss)
 
-```
-No missing values so we can continue.
-
-Recode variables for clustering
+# Explore Client Information
+While it's great to know the average client age and that the majority of clients are married, it will be more informative to learn if there are clusters or segments of the population that are similar. By segmenting the population, we aren't specifically looking at whether or not they subscribed to a term deposit, but rather if there are "types" of clients. This will help gain a better understanding of Hometown Bank clients and potentially lead to more precise recommendations.
 
 ```{r}
 bankCluster <- bank
 names(bankCluster)
 ```
 
+#### Segmentation Preparation
+Before segmenting the client population, I will first transform the data to reflect client categories. For example, instead of having one age column, I will create age brackets like 18-24, 25-34, and so on. I will also only focus on features specific to the customer like occupation and education rather than campaign information such as previous campaign outcome.The purpose of this method is not to make predictions, but more to explore the population.
+
+
+
+Next, transformations. Age, Occupation, Marital Status, and Education are all put into categories.
+
+Age:
+* 18-24
+* 25-34
+* 35-44
+* 45-54
+* 55-64
+* 65+
+
 ```{r}
-#Recode Ages
 bankCluster$Age18_24 <- ifelse(bankCluster$age..number < 25 & bankCluster$age..number >= 18, 1, 0)
 bankCluster$Age25_34 <- ifelse(bankCluster$age..number < 35 & bankCluster$age..number >= 25, 1, 0)
 bankCluster$Age35_44 <- ifelse(bankCluster$age..number < 45 & bankCluster$age..number >= 35, 1, 0)
@@ -45,21 +81,12 @@ bankCluster$Age55_64 <- ifelse(bankCluster$age..number < 65 & bankCluster$age..n
 bankCluster$age..number <- NULL
 ```
 
-```{r}
-bankCluster$homeLoan <- ifelse(bankCluster$housing..category == "yes", 1, 0)
-bankCluster$housing..category <- NULL
-```
 
-```{r}
-bankCluster$defaultYes <- ifelse(bankCluster$default..category == "yes", 1, 0)
-bankCluster$default..category <- NULL
-```
-
-```{r}
-bankCluster$personalLoan <- ifelse(bankCluster$loan..category == "yes", 1, 0)
-bankCluster$loan..category <- NULL
-```
-
+Education: 
+* Primary
+* Secondary
+* Tertiary
+* Unknown
 
 ```{r}
 bankCluster$eduPrimary <- ifelse(bankCluster$education..category == "primary", 1, 0)
@@ -67,6 +94,20 @@ bankCluster$eduSecondary <- ifelse(bankCluster$education..category == "secondary
 bankCluster$eduTertiary <- ifelse(bankCluster$education..category == "tertiary", 1, 0)
 bankCluster$education..category <- NULL
 ```
+
+Occupation:
+* Administration
+* Blue Collar
+* Entrepreneur
+* Housemaid
+* Management
+* Retired
+* Self-Employed
+* Services
+* Student
+* Technician
+* Unemployed
+* Unknown
 
 ```{r}
 bankCluster$admin <- ifelse(bankCluster$job..category == "admin", 1, 0)
@@ -83,16 +124,40 @@ bankCluster$unemployed <- ifelse(bankCluster$job..category == "unemployed", 1, 0
 bankCluster$job..category <-NULL
 ```
 
+Marital Status:
+* Divorced
+* Married
+* Single
+
 ```{r}
 bankCluster$married <- ifelse(bankCluster$marital..category == "married", 1, 0)
 bankCluster$single <- ifelse(bankCluster$marital..category == "single", 1, 0)
 bankCluster$marital..category <- NULL
 ```
 
+Finally, information on defaults, the outcome, and housing and personal loans will be changed from "Yes" and "No" to 1 and 0. This does not change the content of the data but does make it easier to interpret.
+
+```{r}
+bankCluster$homeLoan <- ifelse(bankCluster$housing..category == "yes", 1, 0)
+bankCluster$housing..category <- NULL
+```
+
+```{r}
+bankCluster$defaultYes <- ifelse(bankCluster$default..category == "yes", 1, 0)
+bankCluster$default..category <- NULL
+```
+
+```{r}
+bankCluster$personalLoan <- ifelse(bankCluster$loan..category == "yes", 1, 0)
+bankCluster$loan..category <- NULL
+```
+
 ```{r}
 bankCluster$subscriber <- ifelse(bankCluster$y..category == "yes", 1, 0)
 bankCluster$y..category <- NULL
 ```
+
+Because I am only looking at client characteristics, I will remove information about the campaign.
 
 ```{r}
 bankCluster <- bankCluster[, -c(1:9)]
@@ -102,20 +167,34 @@ bankCluster <- bankCluster[, -c(1:9)]
 summary(bankCluster)
 ```
 
+Next for the actual customer segmentation. If we grouped all clients into 2 groups, what would be the characteristics of those two groups?
 ```{r}
 set.seed(1234)
 bank_cluster_2 <- kmeans(bankCluster, centers=2) 
 Clusters_2<-data.frame(bank_cluster_2$centers)
 bank_cluster_2$size
-#View(t(Clusters_2))
 ```
-
+70.2% of clients are in Group 1 and 29.8% are in Group 2. Let's take a look at those two groups.
 
 ![      *Characteristics of Hometown Bank's Two Primary Groups*](C:/Users/eaust/OneDrive/Documents/R/Week6/ADMWeek6/data/Clusters.png) 
 
-# Decision Tree
+As you can see, the clients split nicely into two groups. Group 1 are your established adults. 35% of the clients in this group are between the ages of 35 and 44, most are married, and the majority have a home loan. Of the 31,719 clients in Group 1, 10.4% subscribed to a term deposit. 
 
-Split into train and test set. For this assignment I'm trying out caTools package with sample.split.
+Group 2 are your young adults. Nearly all are single, and most are between 25 and 34 years of age. Almost half have a home loan. 
+
+By grouping clients, it is easier to get an idea of who Hometown Bank will be advertising to and some information about them. This also helps differentiate two different marketing campaigns:
+* When advertising for Group 1, it would be best to use tie-ins to family life. For example, encourage customers to purchase a term deposit for their children as a guarantee for college.
+* When advertising for Group 2, think of the young adults that are in the group. Ads should focus on tasks that occur while becoming established: purchasing a home or putting away money for future home renovations or a wedding. 
+
+By knowing Hometown Bank's audience, marketing can be more directed.
+
+
+# Decision Tree
+Next I want to see which factors indicate whether or not a customer will subcribe to a term deposit. One technique is called a *decision tree*. With a decision tree, the most important factor is revealed, with other factors branching out from under the original. The tree is a series of yes/no questions that provide a map to whether or not the customer is likely to subscribe.
+
+For this method, the data is first split into two sets: training and testing. The model will be "learned" from the training set, finding patterns in the data. Next, the test set will be put through the tree and predictions will be made for each customer. Finally, the tree will be evaluated. I will compare the predicted value vs. the actual value for each customer to score the tree on its performance. 
+
+### Tree Preparation
 ```{r}
 set.seed(1234)
 library(caTools)
@@ -132,7 +211,7 @@ bank_train$spl <- NULL
 bank_test$spl <-NULL
 ```
 
-Build Tree
+### Build Tree
 
 ```{r, warning=FALSE}
 library(rpart)
@@ -145,9 +224,9 @@ library(rpart.plot)
 rpart.plot(bank_rpart, type=0, extra=101)
 ```
 This decision tree shows that those customers more likely to subcribe are:
-* those who were last contacted within the previous 132-522 days and whose last outcome was successful.
-* those who were not contacted in the last 828 days.
-* those who were last contacted within the previous 522-828 days and whose last outcome was successful.
+* those whose contact was 132-522 seconds long and whose last outcome was successful.
+* those whose contact was greater than 828 seconds.
+* those whose contact was 522-828 seconds long and whose last outcome was successful.
 
 
 
@@ -158,9 +237,10 @@ predicted <- predict(bank_rpart, bank_test, type="class")
 results.matrix <- confusionMatrix(predicted, actual, positive="yes")
 print(results.matrix)
 ```
+This tree is about 90% accurate, meaning it was correct 90% of the time. The measure we want to focus on is specificity. We want to avoid wasting resources (staff time, mailing fees, etc.), so being able to eliminate customers that are least likely to subscribe to a term deposit is important.  In this case, the model correctly identified customers that wouldn't subscribe to a term deposit 97.2% of the time, so we can say with 97.2% certainty that those customers shouldn't be contacted. More effort and resources can be spent on the other customers. 
 
-The measure we want to focus on is specificity. We want to avoid wasting resources (staff time, mailing fees, etc.), so finding true negatives is the most important factor. In this case, the model found true negatives at a rate of 97.2%, so we can say with 97% certainty that those customers shouldn't be contacted. More effort and resources can be spent on the other customers. 
-
+### Tree Adjustments
+Here I am making minor adjustments to the tree to make it simpler. 
 ```{r}
 cptable <- printcp(bank_rpart)
 plotcp(bank_rpart, minline=TRUE, col="red") 
@@ -171,21 +251,39 @@ plotcp(bank_rpart, minline=TRUE, col="red")
 pruned_bank_rpart <- prune(bank_rpart, cp=.031)
 rpart.plot(pruned_bank_rpart, type=0, extra=101)
 ```
+```{r}
+actual <- bank_test$y..category
+predicted <- predict(pruned_bank_rpart, bank_test, type="class")
+results.matrix <- confusionMatrix(predicted, actual, positive="yes")
+print(results.matrix)
+```
+After those adjustments, we lose a slight bit of accuracy but overall the tree is just as effective. This tree is much simpler to use than the original, making it easy to use in the future.
+
+With this tree, the customers most likely to subscribe to a term deposit are:
+* those whose contact was greater than 828 seconds (about 14 minutes)
+* those whose contact was less than 522 seconds (almost 9 minutes) and whose previous campaign was successful
 
 
 # Random Forest
+My final method is called a *Random Forest*. The strategy here is to make a tree like above, but over and over. By creating hundreds of trees and then finding the most frequent prediction among the trees, Hometown Bank will have a model that can predict which customers will subscribe to a term deposit very effectively. 
 
 ```{r}
-names(bank_train)
 library(randomForest)
 bank.rForest <- randomForest(y..category~., data=bank_train, mtry=3, ntree=500, na.action = na.omit, importance=TRUE)
 print(bank.rForest)
 ```
 
+With this method the output isn't a tree like before, but a list of factors that are the most important. 
+
 ```{r}
 importance(bank.rForest)
 varImpPlot(bank.rForest)
 ```
+Duration has the highest importance, meaning it is the most important factor in determining who will subscribe. 
+
+The importance chart shows how much specific factors contribute to the overall prediction. As you can see, duration exceeds all other factors in contributing, and could potentially be the sole factor used in determining who will subscribe.
+
+Finally, let's score this model to see how it performed. 
 
 ```{r}
 actual <- bank_train$y..category 
@@ -193,6 +291,18 @@ bank_predicted <- predict(bank.rForest, newdata=bank_train, type="class")
 bank_results.matrix.rf <- confusionMatrix(bank_predicted, actual, positive="yes") 
 print(bank_results.matrix.rf)
 ```
+
+This model was correct 99.51% of the time! More importantly, the model was able to find every customer that did not subscribe to a term deposit (100% of the time), meaning it can be used to eliminate customers who shouldn't be targeted.
+
+# Recommendations
+
+Hometown Bank should pay close attention to the duration of its marketing calls and make note of the ones that are of significant length. Calls longer than 13 minutes have a 100% success rate, so the next step would be to determine if the call is longer because the customer is more interested or if the customer is more interested because the caller is being patient and answering any and all questions. Callers should be trained to encourage a conversation with the customer, rather than a quick appeal.
+
+Customers that previously signed up for at term deposit were more likely to subscribe again. That's something to be proud of! Hometown Bank has provided customer service that encourages clients to subscribe again. Special notice should be given to past subscribers, possibly with special perks for repeat subscribers.
+
+Finally, Hometown Bank should be mindful of its audience when marketing for this campaign. The clients split into two categories: Established Adults and Young Adults. By knowing each audience's needs, Hometown Bank will likely increase its term deposit subscribers.
+
+
 
 
 
